@@ -1,6 +1,6 @@
-const EXPRESSION_SYMBOLS_REGEX = /(-\d+\.\d+)|(-\d+)|(\d+\.\d+)|(\d+)|([()/*+])|(-)(?!\d)|(sin)/g
+const EXPRESSION_SYMBOLS_REGEX = /(-\d+\.\d+)|(-\d+)|(\d+\.\d+)|(\d+)|([()/*+^])|(-)(?!\d)|(sin)/g
 
-type FirstOrderOperationSign = "*" | "/";
+type FirstOrderOperationSign = "*" | "/" | "^";
 type SecondOrderOperationSign = "+" | "-";
 type UnaryLeftSign = "sin";
 type OperationSign = FirstOrderOperationSign | SecondOrderOperationSign;
@@ -151,7 +151,7 @@ function isSecondOrderOperationSign(val : string) : val is SecondOrderOperationS
 }
 
 function isFirstOrderOperationSign(val : string) : val is FirstOrderOperationSign {
-    return val === "*" || val === "/";
+    return val === "*" || val === "/" || val === "^";
 }
 
 function isOperationSign(val : string) : val is OperationSign {
@@ -172,6 +172,8 @@ function callOperation(left : number, right : number, operation : OperationSign)
             return left / right;
         case "*":
             return left * right;
+        case "^":
+            return Math.pow(left, right);
     }
 }
 
@@ -196,7 +198,8 @@ const tests : [string, number][] = [
     ['((80 - (19)))', 61],
     ['(1 - 2) + -(-(-(-4)))', 3],
     ['123.45*(678.90 / (-2.5+ 11.5)-(80 -19) *33.25) / 20 + 11', -12042.760875],
-    ['12 + Math.sin(-3.2) / Math.sin(-2)', 11.935803025824717]
+    ['12 + Math.sin(-3.2) / Math.sin(-2)', 11.935803025824717],
+    ['12 ^ 2 - 14', 130]
 ];
 
 tests.forEach(function ([arg, expected]) {
