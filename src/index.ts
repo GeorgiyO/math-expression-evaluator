@@ -1,7 +1,8 @@
-const EXPRESSION_SYMBOLS_REGEX = /(-\d+\.\d+)|(-\d+)|(\d+\.\d+)|(\d+)|([()/*+])|(-)(?!\d)/g
+const EXPRESSION_SYMBOLS_REGEX = /(-\d+\.\d+)|(-\d+)|(\d+\.\d+)|(\d+)|([()/*+])|(-)(?!\d)|(sin)/g
 
 type FirstOrderOperationSign = "*" | "/";
 type SecondOrderOperationSign = "+" | "-";
+type UnaryLeftSign = "sin";
 type OperationSign = FirstOrderOperationSign | SecondOrderOperationSign;
 
 type Tree<T> = (T | Tree<T>)[];
@@ -61,8 +62,9 @@ function calculate(symbols : Tree<string | number>) : number {
 
     handleInner();
     handleUnaryMinus();
-    handleOperationIf(isFirstOrderOperationSign);
-    handleOperationIf(isSecondOrderOperationSign);
+    handleUnaryLeftOperation();
+    handleBiOperationIf(isFirstOrderOperationSign);
+    handleBiOperationIf(isSecondOrderOperationSign);
 
     return Number(symbols[0]);
 
@@ -110,13 +112,32 @@ function calculate(symbols : Tree<string | number>) : number {
         }
     }
 
-    function handleOperationIf(predicate : Predicate<OperationSign>) {
+    function handleUnaryLeftOperation() {
+        let i = symbols.length - 1;
+
+        function splice() {
+            symbols.splice(i - 1, 1);
+            i--;
+        }
+
+        for (i; i >= 1; i--) {
+            let target = symbols[i];
+            let operation = symbols[i - 1];
+
+            if (isUnarySign(operation as string)) {
+                symbols[i] = callUnaryOperation(target as number, operation as UnaryLeftSign);
+                splice();
+            }
+        }
+    }
+
+    function handleBiOperationIf(predicate : Predicate<string>) {
         for (let i = 0; i < symbols.length - 2; i += 2) {
             let left = symbols[i];
             let sign = symbols[i + 1];
             let right = symbols[i + 2];
 
-            if (predicate(sign as OperationSign)) {
+            if (predicate(sign as string)) {
                 symbols[i] = callOperation(Number(left as string), Number(right as string), sign as OperationSign);
                 symbols.splice(i + 1, 2);
                 i -= 2;
@@ -137,12 +158,27 @@ function isOperationSign(val : string) : val is OperationSign {
     return isFirstOrderOperationSign(val) || isSecondOrderOperationSign(val);
 }
 
+function isUnarySign(val : string) : val is UnaryLeftSign {
+    return val === "sin";
+}
+
 function callOperation(left : number, right : number, operation : OperationSign) : number {
     switch (operation) {
-        case "+": return left + right;
-        case "-": return left - right;
-        case "/": return left / right;
-        case "*": return left * right;
+        case "+":
+            return left + right;
+        case "-":
+            return left - right;
+        case "/":
+            return left / right;
+        case "*":
+            return left * right;
+    }
+}
+
+function callUnaryOperation(target : number, operation : UnaryLeftSign) : number {
+    switch (operation) {
+        case "sin":
+            return Math.sin(target);
     }
 }
 
@@ -159,7 +195,8 @@ const tests : [string, number][] = [
     ['12* 123/-(-5 + 2)', 492],
     ['((80 - (19)))', 61],
     ['(1 - 2) + -(-(-(-4)))', 3],
-    ['123.45*(678.90 / (-2.5+ 11.5)-(80 -19) *33.25) / 20 + 11', -12042.760875]
+    ['123.45*(678.90 / (-2.5+ 11.5)-(80 -19) *33.25) / 20 + 11', -12042.760875],
+    ['12 + Math.sin(-3.2) / Math.sin(-2)', 11.935803025824717]
 ];
 
 tests.forEach(function ([arg, expected]) {
@@ -170,8 +207,8 @@ tests.forEach(function ([arg, expected]) {
                 actual === expected
                 ? "succeed"
                 : ("failed" +
-                   "\nexpected: " + expected +
-                   "\n     got: " + actual)
+                    "\nexpected: " + expected +
+                    "\n     got: " + actual)
             )
         );
     } catch (e) {
@@ -181,5 +218,5 @@ tests.forEach(function ([arg, expected]) {
 
 function log(val : any, label : any = undefined) {
     if (label === 1 || label === 5)
-    console.log(label ? label : "", JSON.parse(JSON.stringify(val)));
+        console.log(label ? label : "", JSON.parse(JSON.stringify(val)));
 }
