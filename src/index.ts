@@ -5,6 +5,44 @@ type SecondOrderOperationSign = "+" | "-";
 type UnaryLeftSign = "sin";
 type OperationSign = FirstOrderOperationSign | SecondOrderOperationSign;
 
+function isSecondOrderOperationSign(val : string) : val is SecondOrderOperationSign {
+    return val === "+" || val === "-";
+}
+
+function isFirstOrderOperationSign(val : string) : val is FirstOrderOperationSign {
+    return val === "*" || val === "/" || val === "^";
+}
+
+function isOperationSign(val : string) : val is OperationSign {
+    return isFirstOrderOperationSign(val) || isSecondOrderOperationSign(val);
+}
+
+function isUnarySign(val : string) : val is UnaryLeftSign {
+    return val === "sin";
+}
+
+function callOperation(left : number, right : number, operation : OperationSign) : number {
+    switch (operation) {
+        case "+":
+            return left + right;
+        case "-":
+            return left - right;
+        case "/":
+            return left / right;
+        case "*":
+            return left * right;
+        case "^":
+            return Math.pow(left, right);
+    }
+}
+
+function callUnaryLeftOperation(target : number, operation : UnaryLeftSign) : number {
+    switch (operation) {
+        case "sin":
+            return Math.sin(target);
+    }
+}
+
 type Tree<T> = (T | Tree<T>)[];
 
 type Predicate<T> = (arg : T) => boolean;
@@ -125,7 +163,7 @@ function calculate(symbols : Tree<string | number>) : number {
             let operation = symbols[i - 1];
 
             if (isUnarySign(operation as string)) {
-                symbols[i] = callUnaryOperation(target as number, operation as UnaryLeftSign);
+                symbols[i] = callUnaryLeftOperation(target as number, operation as UnaryLeftSign);
                 splice();
             }
         }
@@ -143,44 +181,6 @@ function calculate(symbols : Tree<string | number>) : number {
                 i -= 2;
             }
         }
-    }
-}
-
-function isSecondOrderOperationSign(val : string) : val is SecondOrderOperationSign {
-    return val === "+" || val === "-";
-}
-
-function isFirstOrderOperationSign(val : string) : val is FirstOrderOperationSign {
-    return val === "*" || val === "/" || val === "^";
-}
-
-function isOperationSign(val : string) : val is OperationSign {
-    return isFirstOrderOperationSign(val) || isSecondOrderOperationSign(val);
-}
-
-function isUnarySign(val : string) : val is UnaryLeftSign {
-    return val === "sin";
-}
-
-function callOperation(left : number, right : number, operation : OperationSign) : number {
-    switch (operation) {
-        case "+":
-            return left + right;
-        case "-":
-            return left - right;
-        case "/":
-            return left / right;
-        case "*":
-            return left * right;
-        case "^":
-            return Math.pow(left, right);
-    }
-}
-
-function callUnaryOperation(target : number, operation : UnaryLeftSign) : number {
-    switch (operation) {
-        case "sin":
-            return Math.sin(target);
     }
 }
 
